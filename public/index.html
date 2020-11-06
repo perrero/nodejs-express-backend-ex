@@ -1,0 +1,117 @@
+<html>
+    <head>
+        <title>test page</title>
+    </head>
+    <body>
+        <script>
+            const baseAPIUrl = '/api/v1'
+            
+            let rightPhone = null
+            let rightCode = null
+            const getRightPhone = () => {
+                return rightPhone
+            }
+            const getRightCode = () => {
+                return rightCode
+            }
+            const setRightCode = (phoneNumber, code) => {
+                rightPhone = phoneNumber
+                rightCode = code
+                document.getElementById('sms_right').innerHTML = ['CALL', phoneNumber, code].join(' ')
+            }
+
+            const output = (msg) => {
+                document.getElementById('console').innerHTML = msg
+            }
+
+            const callAPI = async (endpoint, params) => {
+                const url = baseAPIUrl + endpoint
+                try {
+                    output('waiting, please...')
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json;charset=utf-8'
+                        },
+                        body: JSON.stringify(params)
+                    })
+                    const data = await res.json()
+                    output(JSON.stringify(data))
+                    if (data.status && data.status == "success") {
+                        switch(endpoint) {
+                            case '/sms/send':
+                                // для демонстрации тут допущена утечка с бэка кода подтверждения
+                                if (data.result.DEBUG && data.result.DEBUG.code) {
+                                    setRightCode(data.result.DEBUG.phoneNumber, data.result.DEBUG.code)
+                                }
+                                break
+                            case '/sms/verify':
+                                if (data.result && data.result.token) {
+                                    alert(`access_token: ${data.result.token}`)
+                                }
+                                break
+                        }
+                    }
+                }
+                catch(e) {
+                    console.log(e)
+                    output(e)
+                }
+            }
+
+            function sms_send(phoneNumber) {
+                console.log('sms_send', phoneNumber)
+                callAPI('/sms/send', {phoneNumber: phoneNumber})
+                return false
+            }
+
+            function sms_verify(phoneNumber, code) {
+                console.log('sms_verify', phoneNumber, code)
+                callAPI('/sms/verify', {phoneNumber: phoneNumber, code: code})
+                return false
+            }
+
+            function register_user() {
+                console.log('register_user')
+                callAPI('/register', {
+                    fullName: 'Иванов Иван Иванович',
+                    email: 'box@mail.ru',
+                    phoneNumber: '+7 1112223344',
+                    country: 'Россия',
+                    city: 'Москва',
+                    mobileOs: 'Android',
+                })
+                return false
+            }
+
+            function autocomplete_country(example) {
+                console.log('autocomplete_country', example)
+                callAPI('/autocomplete/country', {example})
+                return false
+            }
+
+            function autocomplete_city(country_id, example) {
+                console.log('autocomplete_city', country_id, example)
+                callAPI('/autocomplete/city', {country_id, example})
+                return false
+            }
+
+        </script>
+        <h1>API v1</h1>
+        <p id="console">output console here</p>
+        <h2>SMS API</h2>
+        <ul>
+            <li>/api/v1/sms/send <button onclick="sms_send('+7 1234567890')">CALL +71234567890</button><button onclick="sms_send('+8 8001234567890')">CALL +88001234567890</button></li>
+            <li>/api/v1/sms/verify <button id="sms_right" onclick="sms_verify(getRightPhone(), getRightCode())">CALL RIGHT</button><button onclick="sms_verify(getRightPhone(), '0')">CALL WRONG</button></li>
+        </ul>
+        <h2>Register API</h2>
+        <ul>
+            <li>/api/v1/register <button onclick="register_user()">TRY</button></li>
+        </ul>
+        <h2>Autocomplete API</h2>
+        <ul>
+            <li>/api/v1/autocomplete/country <button onclick="autocomplete_country('Ро')">TRY</button></li>
+            <li>/api/v1/autocomplete/city <button onclick="autocomplete_city(1, 'Мо')">TRY</button></li>
+        </ul>
+    </body>
+</html>

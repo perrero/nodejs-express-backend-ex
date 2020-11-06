@@ -1,0 +1,25 @@
+{
+    "appenders": {
+        "console": { "type": "console" },
+        "devmail": {
+            "type": "smtp",
+            "SMTP": {
+                "host": "smtp.host",
+                "port": 25,
+                "secure": false
+            },
+            "sendInterval": 1,
+            "sender": "sender@myhost",
+            "recipients": "developer@myhost",
+            "subject": "fatal error"
+        },
+        "errors2mail": {
+            "type": "logLevelFilter",
+            "appender": "devmail",
+            "level": "error"
+        }
+    },
+    "categories": {
+        "default": { "appenders": ["console"], "level": "debug" }
+    }
+}
